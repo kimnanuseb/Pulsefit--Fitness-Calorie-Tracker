@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PulseFit Core</title>
+    
+    <!-- PWA / Mobile Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PulseFit">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#050505">
+    
+    <!-- App Icon: Emerald Pulse on Dark Background -->
+    <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzA1MDUwNSIvPjxwYXRoIGQ9Ik00Mi43IDI1NkgxMjhsNjQgMTkyIDEyOC0zODQgNjQgMTkyaDg1LjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzEwYjk4MSIgc3Ryb2tlLXdpZHRoPSIzMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzA1MDUwNSIvPjxwYXRoIGQ9Ik00Mi43IDI1NkgxMjhsNjQgMTkyIDEyOC0zODQgNjQgMTkyaDg1LjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzEwYjk4MSIgc3Ryb2tlLXdpZHRoPSIzMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+          --bg: #050505;
+          --card: rgba(20, 20, 22, 0.7);
+          --text: #ffffff;
+          --subtext: #71717a;
+          --border: rgba(255,255,255,0.05);
+          --input-bg: #111111;
+          --accent: #10b981;
+        }
+
+        .theme-light {
+          --bg: #f4f4f5;
+          --card: #ffffff;
+          --text: #09090b;
+          --subtext: #52525b;
+          --border: rgba(0,0,0,0.08);
+          --input-bg: #e4e4e7;
+          --accent: #059669;
+        }
+
+        body { 
+          font-family: 'Inter', sans-serif; 
+          transition: background-color 0.3s ease, color 0.3s ease;
+          overscroll-behavior-y: contain;
+          -webkit-tap-highlight-color: transparent;
+          background-color: var(--bg);
+          color: var(--text);
+          overflow-x: hidden;
+          min-height: 100vh;
+          padding-top: env(safe-area-inset-top);
+        }
+        
+        .glass { background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--border); }
+        .emerald-glow { box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.3); }
+        
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        
+        @keyframes pulse-ring {
+          0% { transform: scale(0.8); opacity: 0.5; }
+          50% { transform: scale(1.1); opacity: 0.2; }
+          100% { transform: scale(0.8); opacity: 0.5; }
+        }
+        .animate-pulse-ring { animation: pulse-ring 3s infinite ease-in-out; }
+        
+        nav { padding-bottom: calc(env(safe-area-inset-bottom, 12px) + 12px) !important; }
+
+        .form-input {
+          background-color: var(--input-bg);
+          border: 1px solid var(--border);
+          color: var(--text);
+          padding: 1rem;
+          border-radius: 1rem;
+          width: 100%;
+          outline: none;
+          transition: all 0.2s;
+        }
+        .form-input:focus { border-color: var(--accent); }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        .sticky-top-safe {
+          position: sticky;
+          top: calc(env(safe-area-inset-top) + 0.5rem);
+          z-index: 50;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "lucide-react": "https://esm.sh/lucide-react@0.344.0?deps=react@18.2.0",
+    "@google/genai": "https://esm.sh/@google/genai@0.21.0",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="theme-dark">
+    <div id="root"></div>
+
+    <script type="module">
+        import React, { useState, useEffect, useRef, useMemo } from 'react';
+        import ReactDOM from 'react-dom/client';
+        import { 
+            LayoutDashboard, Activity, Utensils, User as UserIcon, 
+            ChevronRight, Moon, Sun, History, Play, Square, 
+            MapPin, Zap, Navigation, Search, Plus, X, Check, 
+            Hash, Info, Save, User, Scale, Ruler, Calendar, 
+            Target, Clock, Flame, CheckCircle2, ArrowUpRight, ArrowDownRight,
+            Trash2, Layers, Dumbbell, Map, Sparkles
+        } from 'lucide-react';
+
+        // Register Service Worker for PWA Standalone experience
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then(reg => {
+                console.log('SW Registered for standalone experience');
+            }).catch(err => console.log('SW registration failed:', err));
+          });
+        }
+
+        /** 
+         * CONSTANTS & DATA
+         */
+        const COMMON_FOODS = [
+            // --- STAPLES (MAIZE, RICE, PASTA, BREADS) ---
+            { name: "Top Score Maize Meal (Pap, 1 cup cooked)", calories: 120, protein: 3, carbs: 25, fat: 1 },
+            { name: "Bokomo Maize Meal (Pap, 1 cup cooked)", calories: 125, protein: 3, carbs: 26, fat: 1 },
+            { name: "Mahangu Pap (Pearl Millet, 1 cup)", calories: 119, protein: 3.5, carbs: 23, fat: 1 },
+            { name: "Samp and Beans (1 cup cooked)", calories: 280, protein: 10, carbs: 50, fat: 2 },
+            { name: "Macaroni (Polana, 1 cup cooked)", calories: 220, protein: 8, carbs: 43, fat: 1 },
+            { name: "Spaghetti (Pasta Polana, 1 cup cooked)", calories: 220, protein: 8, carbs: 43, fat: 1 },
+            { name: "Pasta Screws/Fusilli (1 cup cooked)", calories: 220, protein: 8, carbs: 43, fat: 1 },
+            { name: "White Rice (Tastic, 1 cup cooked)", calories: 205, protein: 4, carbs: 45, fat: 0.4 },
+            { name: "Brown Rice (1 cup cooked)", calories: 216, protein: 5, carbs: 45, fat: 1.8 },
+            { name: "Basmati Rice (1 cup cooked)", calories: 205, protein: 4.5, carbs: 44, fat: 0.5 },
+            { name: "Couscous (1 cup cooked)", calories: 176, protein: 6, carbs: 36, fat: 0 },
+            { name: "Vetkoek / Magwinya (Medium, Plain)", calories: 400, protein: 6, carbs: 50, fat: 18 },
+            { name: "Vetkoek with Mince (Medium)", calories: 550, protein: 20, carbs: 55, fat: 28 },
+            { name: "Roosterkoek (Plain, Medium)", calories: 300, protein: 8, carbs: 55, fat: 4 },
+            { name: "Brötchen (Standard Bread Roll)", calories: 240, protein: 8, carbs: 44, fat: 2 },
+            { name: "Brown Bread (Blue Ribbon/Sasko, 1 slice)", calories: 85, protein: 3, carbs: 15, fat: 1 },
+            { name: "White Bread (Blue Ribbon/Sasko, 1 slice)", calories: 80, protein: 3, carbs: 16, fat: 1 },
+            { name: "Whole Wheat Bread (1 slice)", calories: 75, protein: 4, carbs: 12, fat: 1 },
+            { name: "Toast (Buttered, 1 slice)", calories: 120, protein: 3, carbs: 15, fat: 6 },
+            { name: "Potbrood (Traditional, 1 slice)", calories: 150, protein: 4, carbs: 25, fat: 4 },
+            
+            // --- VEGETABLES & SIDES ---
+            { name: "Pumpkin (Boiled/Mashed, 1 cup)", calories: 49, protein: 2, carbs: 12, fat: 0 },
+            { name: "Butternut Squash (Roasted, 1 cup)", calories: 82, protein: 2, carbs: 22, fat: 0 },
+            { name: "Gem Squash (1 medium, boiled)", calories: 45, protein: 1.5, carbs: 10, fat: 0.2 },
+            { name: "Gem Squash (Filled with Sweetcorn, 1 half)", calories: 120, protein: 3, carbs: 20, fat: 4 },
+            { name: "Sweet Potato (Red Skin, Boiled, 1 medium)", calories: 112, protein: 2, carbs: 26, fat: 0.1 },
+            { name: "Potato Salad (with Mayo, 1 cup)", calories: 360, protein: 6, carbs: 28, fat: 25 },
+            { name: "Coleslaw (with Mayo, 1 cup)", calories: 280, protein: 1, carbs: 12, fat: 24 },
+            { name: "Spinach (Marog/Swiss Chard, cooked, 1 cup)", calories: 41, protein: 5, carbs: 7, fat: 0 },
+            { name: "Cabbage (Stewed, 1 cup)", calories: 35, protein: 1.5, carbs: 7, fat: 0.5 },
+            { name: "Beetroot Salad (Pickled, 1/2 cup)", calories: 75, protein: 1, carbs: 18, fat: 0 },
+            { name: "Green Beans (Stewed with Potato, 1 cup)", calories: 110, protein: 3, carbs: 15, fat: 4 },
+            { name: "Chakalaka (Spicy Vegetable Relish, 1/2 cup)", calories: 90, protein: 2, carbs: 12, fat: 4 },
+
+            // --- MEAT & PROTEIN (LOCAL & GAME) ---
+            { name: "Kapana (Grilled Beef Strips, 100g, Fat included)", calories: 280, protein: 26, carbs: 0, fat: 18 },
+            { name: "Kapana (Lean Beef Strips, 100g)", calories: 200, protein: 28, carbs: 0, fat: 9 },
+            { name: "Boerewors (Standard, 100g)", calories: 300, protein: 18, carbs: 2, fat: 25 },
+            { name: "Boerewors (Lean/Game, 100g)", calories: 220, protein: 22, carbs: 1, fat: 14 },
+            { name: "Boerewors Roll (With Roll & Sauce)", calories: 550, protein: 22, carbs: 45, fat: 30 },
+            { name: "Mopane Worms (Dried/Fried, 100g)", calories: 450, protein: 55, carbs: 10, fat: 15 },
+            { name: "Marathon Chicken (Hardbody, Stewing, 100g)", calories: 190, protein: 25, carbs: 0, fat: 9 },
+            { name: "Chicken Dust (Grilled Quarter, Skin on)", calories: 450, protein: 40, carbs: 0, fat: 30 },
+            { name: "Russian Sausage (Fried, 100g)", calories: 310, protein: 12, carbs: 5, fat: 28 },
+            { name: "Polony (French, 2 slices)", calories: 140, protein: 4, carbs: 3, fat: 12 },
+            { name: "Viennas (2 standard)", calories: 160, protein: 8, carbs: 2, fat: 14 },
+            { name: "Corned Beef (Bully Beef, 100g)", calories: 250, protein: 27, carbs: 0, fat: 15 },
+            { name: "Tinned Fish (Lucky Star Pilchards in Tomato, 100g)", calories: 160, protein: 18, carbs: 2, fat: 8 },
+            { name: "Tinned Fish (Chilli, 100g)", calories: 165, protein: 18, carbs: 2, fat: 8.5 },
+            { name: "Goat Meat (Stewed, 100g)", calories: 143, protein: 27, carbs: 0, fat: 3 },
+            { name: "Lamb Chop (Grilled, 100g)", calories: 290, protein: 25, carbs: 0, fat: 21 },
+            { name: "Pork Chop (Grilled, 100g)", calories: 260, protein: 27, carbs: 0, fat: 16 },
+            { name: "Oxtail (Potjiekos, Rich, 100g)", calories: 280, protein: 30, carbs: 0, fat: 18 },
+            { name: "Oryx Steak (Game, 100g)", calories: 110, protein: 22, carbs: 0, fat: 2 },
+            { name: "Kudu Steak (Game, 100g)", calories: 120, protein: 23, carbs: 0, fat: 2.5 },
+            { name: "Springbok Loin (100g)", calories: 115, protein: 22, carbs: 0, fat: 2 },
+            { name: "Eland Steak (100g)", calories: 125, protein: 23, carbs: 0, fat: 3 },
+            { name: "Warthog Meat (Grilled, 100g)", calories: 130, protein: 25, carbs: 0, fat: 3 },
+            { name: "Impala Steak (Game, 100g)", calories: 120, protein: 23, carbs: 0, fat: 2 },
+
+            // --- FISH & SEAFOOD ---
+            { name: "Hake (Battered & Fried, 100g)", calories: 220, protein: 15, carbs: 12, fat: 12 },
+            { name: "Hake (Grilled, 100g)", calories: 110, protein: 20, carbs: 0, fat: 3 },
+            { name: "Snoek (Braaied with Apricot Jam, 100g)", calories: 210, protein: 22, carbs: 8, fat: 10 },
+            { name: "Kingklip (Grilled, 100g)", calories: 105, protein: 20, carbs: 0, fat: 2 },
+            { name: "Calamari Rings (Fried, 100g)", calories: 250, protein: 12, carbs: 20, fat: 14 },
+
+            // --- DAIRY & YOGHURT ---
+            { name: "Oshikandela (Plain, 250ml)", calories: 200, protein: 8, carbs: 25, fat: 6 },
+            { name: "Oshikandela (Strawberry/Fruit, 250ml)", calories: 230, protein: 7, carbs: 32, fat: 6 },
+            { name: "Omaere (Cultured Milk, 1 cup)", calories: 160, protein: 8, carbs: 12, fat: 9 },
+            { name: "Mageu / Maheu (Plain, 250ml)", calories: 140, protein: 2, carbs: 30, fat: 1 },
+            { name: "Mageu (Banana/Cream, 250ml)", calories: 160, protein: 2, carbs: 35, fat: 1 },
+            { name: "Yoghurt (Clover/Parmalat, 100g)", calories: 95, protein: 3.5, carbs: 14, fat: 3 },
+            { name: "Milk (Full Cream, 1 cup/250ml)", calories: 150, protein: 8, carbs: 12, fat: 8 },
+            { name: "Milk (Low Fat, 1 cup/250ml)", calories: 110, protein: 8, carbs: 12, fat: 2.5 },
+            { name: "Cheese (Cheddar/Gouda, 30g)", calories: 120, protein: 7, carbs: 0, fat: 10 },
+
+            // --- BEVERAGES ---
+            { name: "Tafel Lager (330ml)", calories: 145, protein: 1, carbs: 12, fat: 0 },
+            { name: "Windhoek Lager (330ml)", calories: 130, protein: 1, carbs: 10, fat: 0 },
+            { name: "Windhoek Draught (440ml)", calories: 175, protein: 1.5, carbs: 13, fat: 0 },
+            { name: "Castle Lite (330ml)", calories: 125, protein: 1, carbs: 9, fat: 0 },
+            { name: "Iron Brew (330ml Can)", calories: 155, protein: 0, carbs: 39, fat: 0 },
+            { name: "Stoney Ginger Beer (330ml Can)", calories: 165, protein: 0, carbs: 41, fat: 0 },
+            { name: "Sparletta Pine Nut (330ml Can)", calories: 160, protein: 0, carbs: 40, fat: 0 },
+            { name: "Sparletta Creme Soda (330ml Can)", calories: 160, protein: 0, carbs: 40, fat: 0 },
+            { name: "Coca-Cola (330ml Can)", calories: 139, protein: 0, carbs: 35, fat: 0 },
+            { name: "Fanta Orange (330ml Can)", calories: 145, protein: 0, carbs: 37, fat: 0 },
+            { name: "Appletiser (330ml)", calories: 150, protein: 0, carbs: 37, fat: 0 },
+            { name: "Grapetiser (330ml)", calories: 160, protein: 0, carbs: 39, fat: 0 },
+            { name: "Energade (500ml)", calories: 120, protein: 0, carbs: 30, fat: 0 },
+            { name: "Oros (Diluted 1:4, 1 cup)", calories: 80, protein: 0, carbs: 20, fat: 0 },
+            { name: "Rock Shandy (330ml)", calories: 110, protein: 0, carbs: 28, fat: 0 },
+            { name: "Rooibos Tea (Plain, no sugar)", calories: 0, protein: 0, carbs: 0, fat: 0 },
+
+            // --- SNACKS & CONFECTIONERY ---
+            { name: "Biltong (Beef/Game, 50g)", calories: 150, protein: 25, carbs: 2, fat: 4 },
+            { name: "Biltong (Fatty, 50g)", calories: 200, protein: 22, carbs: 2, fat: 12 },
+            { name: "Droëwors (50g)", calories: 210, protein: 18, carbs: 1, fat: 15 },
+            { name: "Chilli Bites (50g)", calories: 160, protein: 24, carbs: 2, fat: 5 },
+            { name: "Simba Chips (Mrs Balls Chutney, 30g)", calories: 160, protein: 2, carbs: 15, fat: 10 },
+            { name: "Simba Chips (Smoked Beef, 30g)", calories: 160, protein: 2, carbs: 15, fat: 10 },
+            { name: "Lays Chips (Salted, 30g)", calories: 165, protein: 2, carbs: 16, fat: 10.5 },
+            { name: "NikNaks (Small packet)", calories: 150, protein: 2, carbs: 18, fat: 9 },
+            { name: "Fritos (BBQ/Tomato, 30g)", calories: 160, protein: 2, carbs: 17, fat: 9 },
+            { name: "Ghost Pops (30g)", calories: 155, protein: 1, carbs: 19, fat: 8 },
+            { name: "Big Korn Bites (30g)", calories: 145, protein: 2, carbs: 20, fat: 6 },
+            { name: "Chocolate Bar (Bar One/Lunch Bar, 50g)", calories: 240, protein: 4, carbs: 35, fat: 9 },
+            { name: "P.S. Chocolate Bar (Caramilk, 50g)", calories: 250, protein: 3, carbs: 32, fat: 12 },
+            { name: "Smarties (Small box)", calories: 180, protein: 2, carbs: 28, fat: 6 },
+            { name: "Jelly Tots (Small packet)", calories: 140, protein: 0, carbs: 35, fat: 0 },
+            { name: "Speckled Eggs (50g)", calories: 220, protein: 1, carbs: 35, fat: 8 },
+            { name: "Rusk (Ouma, 1 rusk)", calories: 120, protein: 2, carbs: 18, fat: 4 },
+            { name: "Marie Biscuits (3 biscuits)", calories: 130, protein: 2, carbs: 22, fat: 4 },
+
+            // --- FRUIT & NUT ---
+            { name: "Apple (Medium)", calories: 95, protein: 0.5, carbs: 25, fat: 0.3 },
+            { name: "Banana (Medium)", calories: 105, protein: 1.3, carbs: 27, fat: 0.3 },
+            { name: "Avocado (Half)", calories: 160, protein: 2, carbs: 9, fat: 15 },
+            { name: "Peanuts (Roasted, Salted, 30g)", calories: 170, protein: 7, carbs: 5, fat: 14 },
+            { name: "Orange (Medium)", calories: 62, protein: 1.2, carbs: 15, fat: 0.2 },
+            { name: "Naartjie (Tangerine, Medium)", calories: 45, protein: 0.8, carbs: 12, fat: 0.1 },
+            { name: "Mango (Medium)", calories: 135, protein: 1, carbs: 35, fat: 0.5 },
+            
+            // --- BREAKFAST ---
+            { name: "Jungle Oats (Cooked with water, 1 cup)", calories: 150, protein: 5, carbs: 27, fat: 3 },
+            { name: "Weet-Bix (2 biscuits, with 1/2 cup milk)", calories: 200, protein: 8, carbs: 30, fat: 4 },
+            { name: "Corn Flakes (1 cup, with 1/2 cup milk)", calories: 170, protein: 5, carbs: 30, fat: 2 },
+            { name: "Muesli (1/2 cup, with yoghurt)", calories: 280, protein: 8, carbs: 40, fat: 10 },
+            { name: "Egg (Boiled/Poached, Large)", calories: 78, protein: 6, carbs: 0.6, fat: 5 },
+            { name: "Egg (Fried, Large)", calories: 90, protein: 6, carbs: 0.6, fat: 7 }
+        ];
+
+        /**
+         * MATH UTILS
+         */
+        const calculateBMI = (w, h) => w / ((h/100) * (h/100));
+        const calculateIdealWeight = (h) => 25.5 * ((h/100) * (h/100)); 
+
+        const getBMICategory = (bmi) => {
+            if (bmi < 18.5) return 'Underweight';
+            if (bmi < 25) return 'Healthy Range';
+            if (bmi < 30) return 'Overweight';
+            return 'Obese';
+        };
+
+        const calculateBMR = (u) => {
+            if (u.gender === 'male') return (10 * u.weight) + (6.25 * u.height) - (5 * u.age) + 5;
+            return (10 * u.weight) + (6.25 * u.height) - (5 * u.age) - 161;
+        };
+
+        const calculateTDEE = (bmr, level) => bmr * level;
+
+        const calculateGoalCalories = (u, tdee) => {
+            if (Math.abs(u.weight - u.goalWeight) < 0.2) return tdee;
+            const diff = u.weight - u.goalWeight;
+            const totalCalorieDiff = diff * 7700;
+            const days = u.timeframeWeeks * 7;
+            const target = tdee - (totalCalorieDiff / days);
+            return Math.max(target, u.gender === 'male' ? 1500 : 1200);
+        };
+
+        const calculateActivityCalories = (type, weight, seconds) => {
+            const METs = { WALKING: 3.5, RUNNING: 8.0, CYCLING: 7.5 };
+            return Math.round(METs[type] * weight * (seconds / 3600));
+        };
+
+        const haversineDistance = (p1, p2) => {
+            const R = 6371;
+            const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+            const dLng = (p2.lng - p1.lng) * Math.PI / 180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(p1.lat * Math.PI/180) * Math.cos(p2.lat * Math.PI/180) * Math.sin(dLng/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        };
+
+        /**
+         * COMPONENTS
+         */
+
+        const Dashboard = ({ user, activities, foodLogs }) => {
+            const bmi = calculateBMI(user.weight, user.height);
+            const idealWeight = calculateIdealWeight(user.height);
+            const bmiCategory = getBMICategory(bmi);
+            const bmr = calculateBMR(user);
+            const tdee = calculateTDEE(bmr, user.activityLevel || 1.375);
+            
+            const isMaintenance = Math.abs(user.weight - user.goalWeight) < 0.2;
+            const target = isMaintenance ? tdee : calculateGoalCalories(user, tdee);
+
+            const todayStr = new Date().toDateString();
+            const eaten = foodLogs.filter(f => new Date(f.timestamp).toDateString() === todayStr).reduce((s, f) => s + f.calories, 0);
+            const burned = activities.filter(a => new Date(a.timestamp).toDateString() === todayStr).reduce((s, a) => s + a.caloriesBurned, 0);
+            const remaining = Math.max(Math.round(target - eaten + burned), 0);
+            const progress = Math.min((eaten / target) * 100, 100);
+
+            return React.createElement('div', { className: 'space-y-6 animate-fade-in pb-20' },
+                React.createElement('div', { className: 'glass p-8 rounded-[2.5rem] relative overflow-hidden emerald-glow border-emerald-500/10' },
+                    React.createElement('div', { className: 'relative z-10' },
+                        React.createElement('p', { className: 'text-zinc-500 text-[10px] font-black uppercase tracking-widest' }, 
+                            isMaintenance ? 'Maintenance Daily Budget' : 'Goal Calorie Budget'
+                        ),
+                        React.createElement('div', { className: 'flex items-baseline gap-2 mt-2' },
+                            React.createElement('h2', { className: 'text-6xl font-black' }, remaining),
+                            React.createElement('span', { className: 'text-emerald-500 font-black text-xl' }, 'LEFT')
+                        ),
+                        React.createElement('div', { className: 'mt-8 grid grid-cols-2 gap-4' },
+                            React.createElement('div', { className: 'bg-zinc-800/20 p-4 rounded-2xl border border-white/5' },
+                                React.createElement('p', { className: 'text-[10px] opacity-50 uppercase font-bold mb-1' }, 'Eaten'),
+                                React.createElement('div', { className: 'flex items-center gap-2' },
+                                    React.createElement('div', { className: 'w-1.5 h-1.5 rounded-full bg-white animate-pulse' }),
+                                    React.createElement('p', { className: 'text-2xl font-black' }, eaten)
+                                )
+                            ),
+                            React.createElement('div', { className: 'bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20' },
+                                React.createElement('p', { className: 'text-[10px] text-emerald-500 uppercase font-bold mb-1' }, 'Burned'),
+                                React.createElement('div', { className: 'flex items-center gap-2' },
+                                    React.createElement(Flame, { size: 14, className: 'text-emerald-500' }),
+                                    React.createElement('p', { className: 'text-2xl font-black text-emerald-500' }, burned)
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: 'w-full h-2 bg-zinc-800/30 rounded-full mt-6 overflow-hidden' },
+                            React.createElement('div', { 
+                                className: 'h-full bg-emerald-500 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(16,185,129,0.5)]',
+                                style: { width: `${progress}%` }
+                            })
+                        )
+                    )
+                ),
+                
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4' },
+                    React.createElement('div', { className: 'glass p-6 rounded-[2rem] flex flex-col justify-center border-emerald-500/10' },
+                        React.createElement('p', { className: 'text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1' }, 'Ideal Aesthetic Weight'),
+                        React.createElement('p', { className: 'text-3xl font-black flex items-center gap-2' }, 
+                            idealWeight.toFixed(1), 
+                            React.createElement('span', { className: 'text-xs opacity-40' }, 'kg')
+                        ),
+                        React.createElement('p', { className: 'text-[10px] text-emerald-500 font-bold uppercase mt-1 flex items-center gap-1' }, 
+                            React.createElement(Sparkles, { size: 10 }),
+                            'Optimal Athletic Benchmark'
+                        )
+                    ),
+                    React.createElement('div', { className: 'glass p-6 rounded-[2rem] flex flex-col justify-center' },
+                        React.createElement('div', { className: 'flex justify-between items-start mb-1' },
+                            React.createElement('p', { className: 'text-zinc-500 text-[10px] font-black uppercase tracking-widest' }, 'Health Metrics'),
+                            React.createElement('p', { className: 'text-[9px] text-emerald-500 font-bold uppercase' }, `Maint: ${Math.round(tdee)} kcal`)
+                        ),
+                        React.createElement('p', { className: 'text-3xl font-black' }, bmi.toFixed(1)),
+                        React.createElement('p', { className: `text-[10px] font-bold mt-1 uppercase ${bmiCategory === 'Healthy Range' ? 'text-emerald-500' : 'text-orange-500'}` }, bmiCategory)
+                    )
+                )
+            );
+        };
+
+        const ActivityTracker = ({ user, onComplete }) => {
+            const [isTracking, setIsTracking] = useState(false);
+            const [type, setType] = useState('WALKING');
+            const [isIndoor, setIsIndoor] = useState(false);
+            const [timer, setTimer] = useState(0);
+            const [distance, setDistance] = useState(0);
+            const [path, setPath] = useState([]);
+            const timerRef = useRef(null);
+            const watchIdRef = useRef(null);
+
+            const start = () => {
+                setIsTracking(true); setTimer(0); setDistance(0); setPath([]);
+                timerRef.current = setInterval(() => setTimer(p => p + 1), 1000);
+                
+                if (!isIndoor && navigator.geolocation) {
+                    watchIdRef.current = navigator.geolocation.watchPosition(pos => {
+                        const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        setPath(prev => {
+                            if (prev.length > 0) {
+                                const d = haversineDistance(prev[prev.length-1], next);
+                                if (d > 0.007) { 
+                                    setDistance(pd => pd + d); 
+                                    return [...prev, next]; 
+                                }
+                                return prev;
+                            }
+                            return [next];
+                        });
+                    }, null, { enableHighAccuracy: true });
+                }
+            };
+
+            const stop = () => {
+                clearInterval(timerRef.current);
+                if (watchIdRef.current) navigator.geolocation.clearWatch(watchIdRef.current);
+                if (isTracking) {
+                    onComplete({
+                        id: Math.random().toString(36).substr(2, 9),
+                        type, duration: timer, distance: parseFloat(distance) || 0,
+                        caloriesBurned: calculateActivityCalories(type, user.weight, timer),
+                        timestamp: Date.now(),
+                        path,
+                        isIndoor
+                    });
+                }
+                setIsTracking(false);
+            };
+
+            return React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'flex gap-2 glass p-1 rounded-2xl border border-white/5' },
+                    ['WALKING', 'RUNNING', 'CYCLING'].map(t => React.createElement('button', {
+                        key: t, disabled: isTracking, onClick: () => setType(t),
+                        className: `flex-1 py-4 rounded-xl text-[11px] font-black uppercase transition-all ${type === t ? 'bg-emerald-500 text-black shadow-lg scale-[1.02]' : 'text-zinc-500'}`
+                    }, t))
+                ),
+                
+                React.createElement('div', { className: 'relative h-[280px] glass rounded-[2.5rem] overflow-hidden bg-zinc-900/40 flex items-center justify-center border border-white/5' },
+                    isIndoor ? React.createElement('div', { className: 'flex flex-col items-center animate-fade-in' },
+                        React.createElement('div', { className: 'w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4 border border-emerald-500/20 shadow-2xl animate-pulse-ring' },
+                            React.createElement(Dumbbell, { className: 'text-emerald-500', size: 40 })
+                        ),
+                        React.createElement('p', { className: 'text-xl font-black uppercase tracking-widest text-emerald-500' }, 'Indoor Mode'),
+                        React.createElement('p', { className: 'text-[10px] opacity-40 font-bold uppercase mt-2' }, 'Gym Session active')
+                    ) : React.createElement('div', { className: 'flex flex-col items-center opacity-20' },
+                        React.createElement(Map, { size: 64, className: 'mb-4' }),
+                        React.createElement('p', { className: 'text-[10px] font-black uppercase tracking-widest' }, isTracking ? 'Capturing GPS...' : 'Outdoor Mode Ready')
+                    )
+                ),
+
+                React.createElement('div', { className: 'glass p-5 rounded-[2rem] flex items-center justify-between border-emerald-500/5' },
+                    React.createElement('div', null,
+                        React.createElement('p', { className: 'text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1' }, 'Environment'),
+                        React.createElement('div', { className: 'flex items-center gap-2' },
+                            isIndoor ? React.createElement(Dumbbell, { size: 14, className: 'text-emerald-500' }) : React.createElement(MapPin, { size: 14, className: 'text-emerald-500' }),
+                            React.createElement('p', { className: 'text-xs font-black uppercase' }, isIndoor ? 'Treadmill / Gym' : 'Street / Trails')
+                        )
+                    ),
+                    React.createElement('button', { 
+                        disabled: isTracking,
+                        onClick: () => setIsIndoor(!isIndoor),
+                        className: `px-6 py-3 rounded-full text-[10px] font-black uppercase transition-all border ${isIndoor ? 'bg-emerald-500 text-black border-emerald-500' : 'border-white/10 opacity-50'}`
+                    }, isIndoor ? 'SWITCH TO OUTDOOR' : 'SWITCH TO INDOOR')
+                ),
+
+                React.createElement('div', { className: 'glass p-8 rounded-[2.5rem] text-center border-emerald-500/5' },
+                    React.createElement('p', { className: 'text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2' }, 'Workout Clock'),
+                    React.createElement('h2', { className: 'text-6xl font-mono font-black mb-8 tabular-nums tracking-tighter' }, 
+                        new Date(timer * 1000).toISOString().substr(11, 8)
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-2 gap-4' },
+                        React.createElement('div', null,
+                            React.createElement('p', { className: 'text-[10px] font-bold uppercase opacity-40 mb-2' }, 'Distance (KM)'),
+                            isIndoor ? React.createElement('input', {
+                                type: 'number', step: '0.01', placeholder: '0.00',
+                                value: distance || '',
+                                onChange: e => setDistance(e.target.value),
+                                className: 'bg-zinc-800/50 p-3 rounded-xl text-2xl font-black text-center w-full outline-none focus:ring-2 focus:ring-emerald-500 transition-all',
+                            }) : React.createElement('p', { className: 'text-3xl font-black' }, distance.toFixed(2))
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('p', { className: 'text-[10px] font-bold uppercase opacity-40 mb-2' }, 'Burn Est.'),
+                            React.createElement('p', { className: 'text-3xl font-black text-emerald-500' }, calculateActivityCalories(type, user.weight, timer))
+                        )
+                    )
+                ),
+
+                React.createElement('button', {
+                    onClick: isTracking ? stop : start,
+                    className: `w-full py-6 rounded-full font-black text-xl flex items-center justify-center gap-3 transition-all shadow-2xl transform active:scale-95 ${isTracking ? 'bg-red-500 text-white' : 'bg-emerald-500 text-black emerald-glow'}`
+                }, 
+                React.createElement(isTracking ? Square : Play, { fill: 'currentColor' }),
+                isTracking ? 'FINISH SESSION' : 'START TRACKING')
+            );
+        };
+
+        const FoodScanner = ({ onComplete }) => {
+            const [search, setSearch] = useState('');
+            const [view, setView] = useState('search');
+            const [selectedFoods, setSelectedFoods] = useState([]);
+            
+            // Manual Entry State
+            const [customName, setCustomName] = useState('');
+            const [customCals, setCustomCals] = useState('');
+            const [customProtein, setCustomProtein] = useState('');
+            const [customCarbs, setCustomCarbs] = useState('');
+            const [customFat, setCustomFat] = useState('');
+
+            const filteredFoods = useMemo(() => 
+                COMMON_FOODS.filter(f => f.name.toLowerCase().includes(search.toLowerCase())).slice(0, 50),
+                [search]
+            );
+
+            const handleManualSubmit = (e) => {
+                e.preventDefault();
+                if (!customCals) return;
+
+                onComplete({
+                    id: Math.random().toString(36).substr(2, 9),
+                    name: customName || "Quick Entry",
+                    calories: parseInt(customCals) || 0,
+                    timestamp: Date.now(),
+                    macronutrients: {
+                        protein: parseInt(customProtein) || 0,
+                        carbs: parseInt(customCarbs) || 0,
+                        fat: parseInt(customFat) || 0,
+                    }
+                });
+
+                resetState();
+            };
+
+            const toggleSelection = (food) => {
+                if (selectedFoods.find(i => i.name === food.name)) {
+                    setSelectedFoods(selectedFoods.filter(i => i.name !== food.name));
+                } else {
+                    setSelectedFoods([...selectedFoods, food]);
+                }
+            };
+
+            const submitSelection = () => {
+                const logs = selectedFoods.map(food => ({
+                    id: Math.random().toString(36).substr(2, 9),
+                    name: food.name,
+                    calories: food.calories,
+                    timestamp: Date.now(),
+                    macronutrients: {
+                        protein: food.protein,
+                        carbs: food.carbs,
+                        fat: food.fat,
+                    }
+                }));
+                onComplete(logs);
+                setSelectedFoods([]);
+                setSearch('');
+            };
+
+            const resetState = () => {
+                setSearch('');
+                setView('search');
+                setCustomName('');
+                setCustomCals('');
+                setCustomProtein('');
+                setCustomCarbs('');
+                setCustomFat('');
+                setSelectedFoods([]);
+            };
+
+            return React.createElement('div', { className: 'space-y-6 animate-fade-in pb-32' },
+                // View Switcher
+                React.createElement('div', { className: 'flex gap-2 p-1 glass rounded-2xl mb-4' },
+                    React.createElement('button', {
+                        onClick: () => setView('search'),
+                        className: `flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'search' ? 'bg-emerald-500 text-black shadow-lg' : 'text-zinc-500'}`
+                    }, 'Search DB'),
+                    React.createElement('button', {
+                        onClick: () => setView('manual'),
+                        className: `flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'manual' ? 'bg-emerald-500 text-black shadow-lg' : 'text-zinc-500'}`
+                    }, 'Manual Label')
+                ),
+
+                view === 'search' ? React.createElement('div', { className: 'space-y-4' },
+                    React.createElement('div', { className: 'relative' },
+                        React.createElement(Search, { className: 'absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500', size: 18 }),
+                        React.createElement('input', {
+                            type: 'text', placeholder: 'Search food, drinks, or snacks...', value: search,
+                            onChange: e => setSearch(e.target.value),
+                            className: 'form-input pl-12'
+                        })
+                    ),
+                    
+                    selectedFoods.length > 0 && React.createElement('button', {
+                        onClick: submitSelection,
+                        className: 'w-full py-4 bg-emerald-500 text-black font-black rounded-xl shadow-lg animate-fade-in flex items-center justify-center gap-2'
+                    }, 
+                        React.createElement(Check, { size: 18 }),
+                        `LOG ${selectedFoods.length} SELECTED ITEMS`
+                    ),
+
+                    React.createElement('div', { className: 'space-y-2 h-[calc(100vh-220px)] overflow-y-auto pr-1 pb-28' },
+                        filteredFoods.length > 0 ? filteredFoods.map((f, i) => {
+                            const isSelected = selectedFoods.find(s => s.name === f.name);
+                            return React.createElement('button', {
+                                key: i, onClick: () => toggleSelection(f),
+                                className: `w-full flex items-center justify-between p-4 glass rounded-2xl border transition-all text-left active:scale-[0.98] ${isSelected ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/5 hover:bg-emerald-500/5'}`
+                            },
+                                React.createElement('div', { className: 'flex gap-4 items-center' },
+                                    React.createElement('div', { className: `w-10 h-10 rounded-xl flex items-center justify-center ${isSelected ? 'bg-emerald-500 text-black' : 'bg-zinc-800 text-zinc-500'}` },
+                                        isSelected ? React.createElement(Check, { size: 18 }) : React.createElement(Utensils, { size: 18 })
+                                    ),
+                                    React.createElement('div', null,
+                                        React.createElement('p', { className: 'font-bold text-sm tracking-tight' }, f.name),
+                                        React.createElement('p', { className: 'text-[10px] text-zinc-500 font-black uppercase tracking-widest' }, `${f.protein}P • ${f.carbs}C • ${f.fat}F`)
+                                    )
+                                ),
+                                React.createElement('div', { className: 'text-right' },
+                                    React.createElement('p', { className: 'font-black text-emerald-500 text-lg' }, f.calories),
+                                    React.createElement('p', { className: 'text-[10px] opacity-30 font-bold uppercase tracking-tighter' }, 'KCAL')
+                                )
+                            );
+                        }) : React.createElement('div', { className: 'py-10 text-center opacity-30' },
+                            React.createElement('p', { className: 'text-sm font-bold' }, `No results for "${search}"`),
+                            React.createElement('button', { onClick: () => setView('manual'), className: 'text-emerald-500 text-[10px] uppercase font-black tracking-widest mt-2 underline' }, 'Switch to Manual')
+                        )
+                    )
+                ) : React.createElement('form', { onSubmit: handleManualSubmit, className: 'glass p-6 rounded-[2.5rem] space-y-6' },
+                    React.createElement('div', { className: 'flex justify-between items-center mb-2' },
+                        React.createElement('div', null,
+                            React.createElement('h3', { className: 'text-lg font-black tracking-tighter uppercase italic' }, 'Nutrition Label Entry'),
+                            React.createElement('p', { className: 'text-[10px] font-bold text-zinc-500 uppercase tracking-widest' }, 'Type details from packaging')
+                        ),
+                        React.createElement('button', { type: 'button', onClick: resetState, className: 'p-2 hover:bg-white/10 rounded-full' }, React.createElement(X, { size: 20 }))
+                    ),
+                    React.createElement('div', { className: 'space-y-4' },
+                        React.createElement('div', { className: 'space-y-1' },
+                            React.createElement('label', { className: 'text-[10px] font-black text-zinc-500 uppercase tracking-widest px-1' }, 'Product Name'),
+                            React.createElement('input', {
+                                type: 'text', placeholder: 'e.g. Blue Monster Can...', value: customName,
+                                onChange: e => setCustomName(e.target.value), className: 'form-input font-bold text-sm'
+                            })
+                        ),
+                        React.createElement('div', { className: 'grid grid-cols-2 gap-4' },
+                            React.createElement('div', { className: 'space-y-1' },
+                                React.createElement('label', { className: 'text-[10px] font-black text-emerald-500 uppercase tracking-widest px-1' }, 'Calories *'),
+                                React.createElement('div', { className: 'relative' },
+                                    React.createElement(Hash, { className: 'absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600', size: 14 }),
+                                    React.createElement('input', {
+                                        type: 'number', required: true, placeholder: '0', value: customCals,
+                                        onChange: e => setCustomCals(e.target.value),
+                                        className: 'form-input pl-10 font-black text-xl text-emerald-500 border-emerald-500/30'
+                                    })
+                                )
+                            ),
+                            React.createElement('div', { className: 'space-y-1 opacity-60' },
+                                React.createElement('label', { className: 'text-[10px] font-black text-zinc-500 uppercase tracking-widest px-1' }, 'Protein (g)'),
+                                React.createElement('input', { type: 'number', placeholder: '0', value: customProtein, onChange: e => setCustomProtein(e.target.value), className: 'form-input font-bold' })
+                            )
+                        ),
+                        React.createElement('div', { className: 'grid grid-cols-2 gap-4' },
+                            React.createElement('div', { className: 'space-y-1 opacity-60' },
+                                React.createElement('label', { className: 'text-[10px] font-black text-zinc-500 uppercase tracking-widest px-1' }, 'Carbs (g)'),
+                                React.createElement('input', { type: 'number', placeholder: '0', value: customCarbs, onChange: e => setCustomCarbs(e.target.value), className: 'form-input font-bold' })
+                            ),
+                            React.createElement('div', { className: 'space-y-1 opacity-60' },
+                                React.createElement('label', { className: 'text-[10px] font-black text-zinc-500 uppercase tracking-widest px-1' }, 'Fat (g)'),
+                                React.createElement('input', { type: 'number', placeholder: '0', value: customFat, onChange: e => setCustomFat(e.target.value), className: 'form-input font-bold' })
+                            )
+                        )
+                    ),
+                    React.createElement('button', {
+                        type: 'submit',
+                        className: 'w-full py-5 bg-emerald-500 text-black font-black rounded-full flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all'
+                    }, React.createElement(Check, { size: 20 }), 'LOG THIS ITEM')
+                )
+            );
+        };
+
+        const HistoryView = ({ activities, foodLogs }) => {
+            const combinedLogs = useMemo(() => [
+                ...activities.map(a => ({ ...a, logType: 'activity' })),
+                ...foodLogs.map(f => ({ ...f, logType: 'food' }))
+            ].sort((a, b) => b.timestamp - a.timestamp), [activities, foodLogs]);
+
+            const groupedByDate = useMemo(() => combinedLogs.reduce((acc, log) => {
+                const date = new Date(log.timestamp).toLocaleDateString('en-US', { 
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+                });
+                if (!acc[date]) acc[date] = [];
+                acc[date].push(log);
+                return acc;
+            }, {}), [combinedLogs]);
+
+            const dates = Object.keys(groupedByDate);
+
+            if (dates.length === 0) {
+                return React.createElement('div', { className: 'flex flex-col items-center justify-center py-20 text-center opacity-40' },
+                    React.createElement(Calendar, { size: 48, className: 'mb-4' }),
+                    React.createElement('p', { className: 'font-bold uppercase tracking-widest text-xs' }, 'No logs found yet'),
+                    React.createElement('p', { className: 'text-sm mt-2' }, 'Start tracking to see your history here.')
+                );
+            }
+
+            return React.createElement('div', { className: 'space-y-10 pb-24 animate-fade-in' },
+                dates.map(date => {
+                    const logs = groupedByDate[date];
+                    const totalEaten = logs.reduce((sum, l) => l.logType === 'food' ? sum + l.calories : sum, 0);
+                    const totalBurned = logs.reduce((sum, l) => l.logType === 'activity' ? sum + l.caloriesBurned : sum, 0);
+
+                    return React.createElement('div', { key: date, className: 'space-y-4' },
+                        React.createElement('div', { className: 'flex items-center justify-between px-2' },
+                            React.createElement('h3', { className: 'text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500' }, date),
+                            React.createElement('div', { className: 'flex gap-3' },
+                                React.createElement('div', { className: 'flex items-center gap-1 text-[10px] font-bold text-zinc-400' },
+                                    React.createElement(ArrowDownRight, { size: 10, className: 'text-emerald-500' }),
+                                    React.createElement('span', null, `${totalEaten} IN`)
+                                ),
+                                React.createElement('div', { className: 'flex items-center gap-1 text-[10px] font-bold text-zinc-400' },
+                                    React.createElement(ArrowUpRight, { size: 10, className: 'text-orange-500' }),
+                                    React.createElement('span', null, `${totalBurned} OUT`)
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: 'space-y-3' },
+                            logs.map(log => React.createElement('div', {
+                                key: log.id,
+                                className: 'glass p-5 rounded-[1.5rem] flex items-center justify-between border-l-4 transition-all hover:translate-x-1',
+                                style: { borderLeftColor: log.logType === 'food' ? '#10b981' : '#f97316' }
+                            },
+                                React.createElement('div', { className: 'flex items-center gap-4' },
+                                    React.createElement('div', { className: `w-10 h-10 rounded-xl flex items-center justify-center ${log.logType === 'food' ? 'bg-emerald-500/10' : 'bg-orange-500/10'}` },
+                                        log.logType === 'food' ? React.createElement(Utensils, { size: 18, className: 'text-emerald-500' }) : React.createElement(Activity, { size: 18, className: 'text-orange-500' })
+                                    ),
+                                    React.createElement('div', null,
+                                        React.createElement('p', { className: 'font-bold text-sm leading-tight' }, log.name || log.type),
+                                        React.createElement('p', { className: 'text-[10px] text-zinc-500 font-bold uppercase tracking-wider' },
+                                            `${new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` + 
+                                            (log.logType === 'activity' ? ` • ${Math.floor(log.duration / 60)} MIN • ${log.distance.toFixed(2)} KM` : '')
+                                        )
+                                    )
+                                ),
+                                React.createElement('div', { className: 'text-right' },
+                                    React.createElement('p', { className: `font-black text-lg ${log.logType === 'food' ? 'text-emerald-500' : 'text-orange-500'}` },
+                                        log.logType === 'food' ? `+${log.calories}` : `-${log.caloriesBurned}`
+                                    ),
+                                    React.createElement('p', { className: 'text-[10px] opacity-40 font-bold uppercase tracking-tighter' }, 'KCAL')
+                                )
+                            ))
+                        )
+                    );
+                })
+            );
+        };
+
+        const ProfileView = ({ user, onSave }) => {
+            const [form, setForm] = useState(user || { name: '', age: 25, height: 175, weight: 70, goalWeight: 70, gender: 'male', activityLevel: 1.375, timeframeWeeks: 12 });
+            const idealWeight = calculateIdealWeight(form.height || 175);
+
+            return React.createElement('form', { onSubmit: e => { e.preventDefault(); onSave(form); }, className: 'space-y-4 animate-fade-in' },
+                React.createElement('div', { className: 'glass p-8 rounded-[2.5rem] space-y-6' },
+                    React.createElement('div', null,
+                        React.createElement('label', { className: 'text-[10px] font-black opacity-40 uppercase tracking-widest ml-1 mb-2 block' }, 'Athlete Name'),
+                        React.createElement('input', { placeholder: 'Name', value: form.name, onChange: e => setForm({...form, name: e.target.value}), className: 'form-input font-bold text-lg' })
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-2 gap-4' },
+                        React.createElement('div', null,
+                            React.createElement('label', { className: 'text-[10px] font-black opacity-40 uppercase tracking-widest ml-1 mb-2 block' }, 'Age'),
+                            React.createElement('input', { type: 'number', value: form.age, onChange: e => setForm({...form, age: +e.target.value}), className: 'form-input' })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { className: 'text-[10px] font-black opacity-40 uppercase tracking-widest ml-1 mb-2 block' }, 'Height (cm)'),
+                            React.createElement('input', { type: 'number', value: form.height, onChange: e => setForm({...form, height: +e.target.value}), className: 'form-input' })
+                        )
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-2 gap-4' },
+                        React.createElement('div', null,
+                            React.createElement('label', { className: 'text-[10px] font-black opacity-40 uppercase tracking-widest ml-1 mb-2 block' }, 'Current Weight (kg)'),
+                            React.createElement('input', { type: 'number', value: form.weight, onChange: e => setForm({...form, weight: +e.target.value}), className: 'form-input font-black text-emerald-500' })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { className: 'text-[10px] font-black opacity-40 uppercase tracking-widest ml-1 mb-2 block' }, 'Goal Weight (kg)'),
+                            React.createElement('input', { type: 'number', value: form.goalWeight, onChange: e => setForm({...form, goalWeight: +e.target.value}), className: 'form-input font-black' })
+                        )
+                    ),
+                    React.createElement('div', { className: 'bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10 flex justify-between items-center' },
+                        React.createElement('div', null,
+                            React.createElement('p', { className: 'text-[10px] font-black opacity-50 uppercase tracking-[0.2em] mb-1' }, 'Realistic Athletic Baseline'),
+                            React.createElement('p', { className: 'text-2xl font-black text-emerald-500' }, `${idealWeight.toFixed(1)} kg`)
+                        ),
+                        React.createElement(Sparkles, { className: 'text-emerald-500', size: 24 })
+                    )
+                ),
+                React.createElement('button', { type: 'submit', className: 'w-full py-6 bg-emerald-500 text-black font-black rounded-full shadow-xl emerald-glow transform active:scale-95 transition-all text-lg tracking-tight' }, 'SYNC ATHLETE PROFILE')
+            );
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [theme, setTheme] = useState(localStorage.getItem('p_theme') || 'dark');
+            const [user, setUser] = useState(JSON.parse(localStorage.getItem('p_user')));
+            const [activities, setActivities] = useState(JSON.parse(localStorage.getItem('p_act')) || []);
+            const [foodLogs, setFoodLogs] = useState(JSON.parse(localStorage.getItem('p_food')) || []);
+
+            useEffect(() => {
+                document.body.className = `theme-${theme}`;
+                localStorage.setItem('p_theme', theme);
+            }, [theme]);
+
+            const saveUser = (u) => { setUser(u); localStorage.setItem('p_user', JSON.stringify(u)); setActiveTab('dashboard'); };
+            const addAct = (a) => { const n = [a, ...activities]; setActivities(n); localStorage.setItem('p_act', JSON.stringify(n)); setActiveTab('dashboard'); };
+            const addFood = (items) => { 
+                const newItems = Array.isArray(items) ? items : [items];
+                const n = [...newItems, ...foodLogs]; 
+                setFoodLogs(n); 
+                localStorage.setItem('p_food', JSON.stringify(n)); 
+                setActiveTab('dashboard'); 
+            };
+
+            if (!user && activeTab !== 'profile') {
+                return React.createElement('div', { className: 'min-h-screen flex flex-col items-center justify-center p-8 text-center bg-[#050505]' },
+                    React.createElement('div', { className: 'w-28 h-28 bg-emerald-500 rounded-[2.5rem] flex items-center justify-center mb-10 shadow-2xl animate-pulse' }, 
+                        React.createElement(Activity, { size: 56, className: 'text-black' })
+                    ),
+                    React.createElement('h1', { className: 'text-6xl font-black uppercase tracking-tighter italic text-white' }, 'PulseFit'),
+                    React.createElement('p', { className: 'text-zinc-500 my-8 font-medium leading-relaxed max-w-xs' }, 
+                        'Track your fitness, monitor your health, and reach your peak performance with pro-grade precision.'
+                    ),
+                    React.createElement('button', { onClick: () => setActiveTab('profile'), className: 'bg-emerald-500 text-black font-black px-16 py-6 rounded-full shadow-2xl emerald-glow transform active:scale-95' }, 'GET STARTED')
+                );
+            }
+
+            return React.createElement('div', { className: 'max-w-xl mx-auto p-4 min-h-screen' },
+                React.createElement('header', { className: 'py-6 flex justify-between items-center' },
+                    React.createElement('div', { className: 'flex items-center gap-3' },
+                        React.createElement('div', { className: 'w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg' }, React.createElement(Activity, { size: 20, className: 'text-black' })),
+                        React.createElement('h1', { className: 'text-xs font-black uppercase tracking-[0.3em]' }, activeTab)
+                    ),
+                    React.createElement('div', { className: 'flex gap-3 items-center' },
+                        React.createElement('button', { onClick: () => setTheme(theme === 'dark' ? 'light' : 'dark'), className: 'p-3 glass rounded-full hover:bg-emerald-500/10 transition-all border border-white/5' },
+                            theme === 'dark' ? React.createElement(Sun, { size: 18 }) : React.createElement(Moon, { size: 18 })
+                        )
+                    )
+                ),
+                React.createElement('main', { className: 'pt-2' },
+                    activeTab === 'dashboard' && React.createElement(Dashboard, { user, activities, foodLogs }),
+                    activeTab === 'track' && React.createElement(ActivityTracker, { user, onComplete: addAct }),
+                    activeTab === 'food' && React.createElement(FoodScanner, { onComplete: addFood }),
+                    activeTab === 'profile' && React.createElement(ProfileView, { user, onSave: saveUser }),
+                    activeTab === 'history' && React.createElement(HistoryView, { activities, foodLogs })
+                ),
+                React.createElement('footer', { className: 'mt-10 text-center opacity-20 text-[9px] uppercase font-black tracking-[0.5em] pb-32' }, 
+                    'Created by soig Creations • Giovanni Nanuseb'
+                ),
+                React.createElement('nav', { className: 'fixed bottom-8 left-6 right-6 flex justify-center z-50' },
+                    React.createElement('div', { className: 'glass flex items-center justify-around w-full max-w-md py-5 rounded-[2.5rem] shadow-2xl emerald-glow border border-white/10' },
+                        React.createElement('button', { onClick: () => setActiveTab('dashboard'), className: `p-2 ${activeTab === 'dashboard' ? 'text-emerald-500 scale-125' : 'opacity-30'} transition-all` }, React.createElement(LayoutDashboard, { size: 22 })),
+                        React.createElement('button', { onClick: () => setActiveTab('track'), className: `p-2 ${activeTab === 'track' ? 'text-emerald-500 scale-125' : 'opacity-30'} transition-all` }, React.createElement(Activity, { size: 22 })),
+                        React.createElement('button', { onClick: () => setActiveTab('food'), className: `p-2 ${activeTab === 'food' ? 'text-emerald-500 scale-125' : 'opacity-30'} transition-all` }, React.createElement(Utensils, { size: 22 })),
+                        React.createElement('button', { onClick: () => setActiveTab('history'), className: `p-2 ${activeTab === 'history' ? 'text-emerald-500 scale-125' : 'opacity-30'} transition-all` }, React.createElement(History, { size: 22 })),
+                        React.createElement('button', { onClick: () => setActiveTab('profile'), className: `p-2 ${activeTab === 'profile' ? 'text-emerald-500 scale-125' : 'opacity-30'} transition-all` }, React.createElement(UserIcon, { size: 22 }))
+                    )
+                )
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
+    </script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>

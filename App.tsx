@@ -1,0 +1,1 @@
+// Deleted - Logic moved to index.html for static hosting support.
